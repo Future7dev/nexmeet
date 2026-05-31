@@ -1,13 +1,19 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const setupSockets = require('./sockets');
 
 // Connect to database
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+
+// Setup Socket.IO
+setupSockets(server);
 
 // Middleware
 app.use(cors());
@@ -34,6 +40,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

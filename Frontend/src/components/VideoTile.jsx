@@ -7,21 +7,24 @@ export default function VideoTile({ stream, name, muted = false, isLocal = false
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, videoOff]);
 
   const initials = name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?";
 
   return (
     <div className={`video-tile ${isLocal ? "local-tile" : ""}`}>
-      {stream && !videoOff ? (
+      {stream ? (
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          muted={muted}
+          muted={muted || audioOff}
           className={`tile-video ${isLocal ? "mirror" : ""}`}
+          style={{ display: videoOff ? 'none' : 'block' }}
         />
-      ) : (
+      ) : null}
+      
+      {(!stream || videoOff) && (
         <div className="tile-avatar">
           <div className="tile-initials">{initials}</div>
         </div>

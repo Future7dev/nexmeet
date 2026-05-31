@@ -14,6 +14,7 @@ export function useWebRTC(roomId, user) {
   const [screenStream, setScreenStream] = useState(null);
   const [mediaState, setMediaState] = useState({ video: true, audio: true });
   const [remoteMediaStates, setRemoteMediaStates] = useState({});
+  const [mediaStarted, setMediaStarted] = useState(false);
 
   const localStreamRef = useRef(null);
   const peerConnections = useRef({});
@@ -27,6 +28,7 @@ export function useWebRTC(roomId, user) {
       });
       localStreamRef.current = stream;
       setLocalStream(stream);
+      setMediaStarted(true);
       return stream;
     } catch (err) {
       console.error("Media error:", err);
@@ -35,8 +37,10 @@ export function useWebRTC(roomId, user) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         localStreamRef.current = stream;
         setLocalStream(stream);
+        setMediaStarted(true);
         return stream;
       } catch {
+        setMediaStarted(true);
         return null;
       }
     }
@@ -53,11 +57,24 @@ export function useWebRTC(roomId, user) {
       );
     }
 
-    pc.ontrack = ({ streams }) => {
-      setPeers((prev) => ({
-        ...prev,
-        [targetSocketId]: { ...prev[targetSocketId], stream: streams[0], name: targetName },
-      }));
+    pc.ontrack = ({ streams, track }) => {
+      setPeers((prev) => {
+        const currentStream = prev[targetSocketId]?.stream;
+        let newStream = currentStream;
+        
+        if (streams && streams[0]) {
+          newStream = streams[0];
+        } else if (!currentStream) {
+          newStream = new MediaStream([track]);
+        } else {
+          currentStream.addTrack(track);
+        }
+
+        return {
+          ...prev,
+          [targetSocketId]: { ...prev[targetSocketId], stream: newStream, name: targetName },
+        };
+      });
     };
 
     pc.onicecandidate = ({ candidate }) => {
@@ -89,20 +106,27 @@ export function useWebRTC(roomId, user) {
   }, []);
 
   const makeOffer = useCallback(async (targetSocketId, targetName) => {
-    const pc = createPeerConnection(targetSocketId, targetName);
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit("offer", { target: targetSocketId, sdp: pc.localDescription, name: user?.name });
+    try {
+      const pc = createPeerConnection(targetSocketId, targetName);
+      if (pc.signalingState !== "stable") return;
+      
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit("offer", { target: targetSocketId, sdp: pc.localDescription, name: user?.name });
+    } catch (err) {
+      console.warn("Error making offer:", err);
+    }
   }, [createPeerConnection, user]);
 
   useEffect(() => {
-    if (!roomId || !user) return;
+    if (!roomId || !user || !mediaStarted) return;
 
     socket.connect();
     socket.emit("join-room", { roomId, userId: user._id || user.id, userName: user.name });
 
     socket.on("room-users", (users) => {
       users.forEach(({ socketId, userName }) => {
+        if (peerConnections.current[socketId]) return;
         setPeers((prev) => ({ ...prev, [socketId]: { name: userName, stream: null } }));
         makeOffer(socketId, userName);
       });
@@ -113,23 +137,47 @@ export function useWebRTC(roomId, user) {
     });
 
     socket.on("offer", async ({ sdp, from, name: senderName }) => {
-      const pc = createPeerConnection(from, senderName);
-      setPeers((prev) => ({ ...prev, [from]: { ...prev[from], name: senderName } }));
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit("answer", { target: from, sdp: pc.localDescription });
+      try {
+        const pc = createPeerConnection(from, senderName);
+        setPeers((prev) => ({ ...prev, [from]: { ...prev[from], name: senderName } }));
+        
+        if (pc.signalingState !== "stable") return;
+        
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        
+        if (pendingCandidates.current[from]) {
+          pendingCandidates.current[from].forEach((c) => pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn));
+          delete pendingCandidates.current[from];
+        }
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("answer", { target: from, sdp: pc.localDescription });
+      } catch (err) {
+        console.warn("Error handling offer:", err);
+      }
     });
 
     socket.on("answer", async ({ sdp, from }) => {
-      const pc = peerConnections.current[from];
-      if (pc) await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      try {
+        const pc = peerConnections.current[from];
+        if (pc && pc.signalingState === "have-local-offer") {
+          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+          
+          if (pendingCandidates.current[from]) {
+            pendingCandidates.current[from].forEach((c) => pc.addIceCandidate(new RTCIceCandidate(c)).catch(console.warn));
+            delete pendingCandidates.current[from];
+          }
+        }
+      } catch (err) {
+        console.warn("Error handling answer:", err);
+      }
     });
 
     socket.on("ice-candidate", ({ candidate, from }) => {
       const pc = peerConnections.current[from];
       if (pc && pc.remoteDescription) {
-        pc.addIceCandidate(new RTCIceCandidate(candidate));
+        pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(err => console.warn("ICE candidate error:", err));
       } else {
         if (!pendingCandidates.current[from]) pendingCandidates.current[from] = [];
         pendingCandidates.current[from].push(candidate);
@@ -159,9 +207,10 @@ export function useWebRTC(roomId, user) {
       socket.disconnect();
       Object.values(peerConnections.current).forEach((pc) => pc.close());
       peerConnections.current = {};
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      // Commented out to prevent closing tracks on strict-mode unmounts
+      // localStreamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [roomId, user, createPeerConnection, makeOffer]);
+  }, [roomId, user, createPeerConnection, makeOffer, mediaStarted]);
 
   const toggleTrack = useCallback((kind) => {
     const tracks = localStreamRef.current?.getTracks().filter((t) => t.kind === kind);

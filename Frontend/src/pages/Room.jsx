@@ -22,16 +22,11 @@ export default function Room() {
   const [elapsed, setElapsed] = useState(0);
   const [copied, setCopied] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
-  const localVideoRef = useRef(null);
   const timerRef = useRef(null);
 
   // Start local camera
   useEffect(() => {
-    startMedia().then((stream) => {
-      if (localVideoRef.current && stream) {
-        localVideoRef.current.srcObject = stream;
-      }
-    });
+    startMedia().catch(console.warn);
     timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, []);
