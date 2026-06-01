@@ -1,21 +1,31 @@
 import { useState, useEffect, useRef } from "react";
 import { socket } from "../pages/socket";
 
-export default function ChatPanel({ roomId, user, onClose }) {
+export default function ChatPanel({ roomId, user, onClose, show }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    socket.on("chat-message", (msg) => {
+    const handleMsg = (msg) => {
       setMessages((prev) => [...prev, msg]);
-    });
-    return () => socket.off("chat-message");
+      window.dispatchEvent(new Event("new-chat-message"));
+    };
+    
+    socket.on("chat-message", handleMsg);
+    
+    return () => {
+      socket.off("chat-message", handleMsg);
+    };
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (show) {
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 50);
+    }
+  }, [messages, show]);
 
   function sendMessage(e) {
     e.preventDefault();
@@ -33,7 +43,7 @@ export default function ChatPanel({ roomId, user, onClose }) {
   }
 
   return (
-    <div className="chat-panel">
+    <div className="chat-panel" style={{ display: show ? "flex" : "none" }}>
       <div className="chat-header">
         <span className="chat-title">In-call messages</span>
         <button className="chat-close" onClick={onClose}>

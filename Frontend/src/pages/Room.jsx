@@ -153,13 +153,12 @@ export default function Room() {
         </div>
 
         {/* Chat panel */}
-        {showChat && (
-          <ChatPanel
-            roomId={roomId}
-            user={user}
-            onClose={() => { setShowChat(false); }}
-          />
-        )}
+        <ChatPanel
+          roomId={roomId}
+          user={user}
+          onClose={() => { setShowChat(false); }}
+          show={showChat}
+        />
       </div>
 
       {/* Controls bar */}

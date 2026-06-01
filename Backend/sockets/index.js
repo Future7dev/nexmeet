@@ -96,5 +96,8 @@ module.exports = function(server) {
             handleDisconnect();
             console.log('User disconnected:', socket.id);
         });
+        socket.on('chat-message', ({ roomId, ...msg }) => {
+            socket.to(roomId).emit('chat-message', msg);
+        });
     });
 };
