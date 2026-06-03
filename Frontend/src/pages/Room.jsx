@@ -11,11 +11,13 @@ export default function Room() {
   const { roomId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [hasJoined, setHasJoined] = useState(false);
+
   const {
     peers, localStream, screenStream,
     mediaState, remoteMediaStates,
     toggleTrack, shareScreen, startMedia,
-  } = useWebRTC(roomId, user);
+  } = useWebRTC(roomId, user, hasJoined);
 
   const [showChat, setShowChat] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -27,9 +29,15 @@ export default function Room() {
   // Start local camera
   useEffect(() => {
     startMedia().catch(console.warn);
-    timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(timerRef.current);
   }, []);
+
+  // Start timer when joined
+  useEffect(() => {
+    if (hasJoined) {
+      timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+      return () => clearInterval(timerRef.current);
+    }
+  }, [hasJoined]);
 
   // Unread count when chat is closed
   useEffect(() => {
@@ -61,6 +69,62 @@ export default function Room() {
   const mm = Math.floor((elapsed % 3600) / 60);
   const ss = elapsed % 60;
   const timer = hh > 0 ? `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}` : `${pad2(mm)}:${pad2(ss)}`;
+
+  if (!hasJoined) {
+    return (
+      <div className="prejoin-page">
+        <div className="prejoin-box">
+          <h2 className="prejoin-title">Ready to join?</h2>
+          <div className="prejoin-video-wrapper">
+            <VideoTile
+              stream={localStream}
+              name={user?.name}
+              muted
+              isLocal
+              videoOff={!mediaState.video}
+              audioOff={!mediaState.audio}
+            />
+            <div className="prejoin-controls-overlay">
+              <button
+                className={`ctrl-btn ${!mediaState.audio ? "ctrl-off" : ""}`}
+                onClick={() => toggleTrack("audio")}
+                title={mediaState.audio ? "Mute" : "Unmute"}
+              >
+                {mediaState.audio ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="22" height="22">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="22" height="22">
+                    <line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+                  </svg>
+                )}
+              </button>
+              <button
+                className={`ctrl-btn ${!mediaState.video ? "ctrl-off" : ""}`}
+                onClick={() => toggleTrack("video")}
+                title={mediaState.video ? "Stop video" : "Start video"}
+              >
+                {mediaState.video ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="22" height="22">
+                    <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.893L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width="22" height="22">
+                    <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/><line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="prejoin-actions">
+            <button className="btn-join-now" onClick={() => setHasJoined(true)}>Join Now</button>
+            <button className="btn-cancel" onClick={() => navigate("/")}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="room-page">

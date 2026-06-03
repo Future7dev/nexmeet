@@ -454,6 +454,114 @@ html, body, #root {
 .btn-sm-primary { background: var(--accent-g); border-color: rgba(79,124,255,0.3); color: var(--accent); }
 .btn-sm-primary:hover { background: rgba(79,124,255,0.25); color: var(--accent); }
 
+/* ── Pre-Join Page ─────────────────────────────── */
+.prejoin-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text-1);
+}
+
+.prejoin-box {
+  width: 500px;
+  max-width: 90%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  box-shadow: var(--shadow);
+}
+
+.prejoin-title {
+  font-family: var(--font-head);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: -0.3px;
+}
+
+.prejoin-video-wrapper {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+}
+
+.prejoin-controls-overlay {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 16px;
+  border-radius: 30px;
+  backdrop-filter: blur(8px);
+}
+
+.prejoin-controls-overlay .ctrl-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  min-width: 48px;
+  padding: 10px;
+  border-radius: 50%;
+}
+.prejoin-controls-overlay .ctrl-btn.ctrl-off {
+  background: rgba(239, 68, 68, 0.8);
+  color: #fff;
+}
+.prejoin-controls-overlay .ctrl-btn:hover:not(.ctrl-off) {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.prejoin-actions {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.btn-join-now {
+  flex: 1;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-join-now:hover { background: var(--accent-d); }
+
+.btn-cancel {
+  flex: 1;
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border-h);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-cancel:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+}
+
 /* ── Room Page ─────────────────────────────────── */
 .room-page {
   height: 100vh;

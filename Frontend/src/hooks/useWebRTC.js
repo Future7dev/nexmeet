@@ -8,7 +8,7 @@ const ICE_SERVERS = {
   ],
 };
 
-export function useWebRTC(roomId, user) {
+export function useWebRTC(roomId, user, hasJoined = true) {
   const [peers, setPeers] = useState({});
   const [localStream, setLocalStream] = useState(null);
   const [screenStream, setScreenStream] = useState(null);
@@ -210,7 +210,7 @@ export function useWebRTC(roomId, user) {
       // Commented out to prevent closing tracks on strict-mode unmounts
       // localStreamRef.current?.getTracks().forEach((t) => t.stop());
     };
-  }, [roomId, user, createPeerConnection, makeOffer, mediaStarted]);
+  }, [roomId, user, createPeerConnection, makeOffer, mediaStarted, hasJoined]);
 
   const toggleTrack = useCallback((kind) => {
     const tracks = localStreamRef.current?.getTracks().filter((t) => t.kind === kind);
