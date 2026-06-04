@@ -17,7 +17,7 @@ function extractRoomId(input) {
   }
 }
 
-const RECENT = [
+const DEFAULT_RECENT = [
   { id: "team-standup-2025", name: "Team Standup", time: "Today, 9:00 AM", participants: 5 },
   { id: "design-review-xyz", name: "Design Review", time: "Yesterday, 3:30 PM", participants: 3 },
   { id: "client-call-abc", name: "Client Call", time: "Mon, 2:00 PM", participants: 2 },
@@ -30,6 +30,12 @@ export default function Dashboard() {
   const [joinError, setJoinError] = useState("");
   const [copying, setCopying] = useState(false);
   const [newRoomId] = useState(() => generateRoomId());
+  const [recentMeetings] = useState(() => {
+    const saved = localStorage.getItem("recentMeetings");
+    if (saved) return JSON.parse(saved);
+    localStorage.setItem("recentMeetings", JSON.stringify(DEFAULT_RECENT));
+    return DEFAULT_RECENT;
+  });
 
   function handleNewMeeting() {
     navigate(`/room/${newRoomId}`);
@@ -178,7 +184,7 @@ export default function Dashboard() {
         <section className="recent-section">
           <h2 className="section-title">Recent meetings</h2>
           <div className="recent-list">
-            {RECENT.map((m) => (
+            {recentMeetings.map((m) => (
               <div key={m.id} className="recent-item">
                 <div className="recent-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">

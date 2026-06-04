@@ -35,9 +35,33 @@ export default function Room() {
   useEffect(() => {
     if (hasJoined) {
       timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+
+      // Save to recent meetings
+      try {
+        const saved = localStorage.getItem("recentMeetings");
+        let recents = saved ? JSON.parse(saved) : [];
+        
+        // Remove existing if any
+        recents = recents.filter(r => r.id !== roomId);
+        
+        // Add new
+        recents.unshift({
+          id: roomId,
+          name: `Room ${roomId}`,
+          time: new Date().toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "numeric", hour12: true }),
+          participants: 1
+        });
+        
+        // Keep only last 5
+        if (recents.length > 5) recents.pop();
+        localStorage.setItem("recentMeetings", JSON.stringify(recents));
+      } catch (err) {
+        console.error("Failed to save recent meeting", err);
+      }
+
       return () => clearInterval(timerRef.current);
     }
-  }, [hasJoined]);
+  }, [hasJoined, roomId]);
 
   // Unread count when chat is closed
   useEffect(() => {
