@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import Lightfall from "./Lightfall";
 
 const styles = `
@@ -711,8 +712,8 @@ function Navbar() {
         <li><a href="#">Developers</a></li>
       </ul>
       <div className="nm-nav-cta">
-        <button className="nm-btn-ghost">Sign in</button>
-        <button className="nm-btn-primary">Get started free</button>
+        <Link to="/login" className="nm-btn-ghost" style={{ textDecoration: 'none', display: 'inline-block' }}>Sign in</Link>
+        <Link to="/signup" className="nm-btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>Get started free</Link>
       </div>
     </nav>
   );
@@ -780,9 +781,9 @@ function HeroSection() {
         NexMeet is the conferencing platform built for what&rsquo;s next.
       </p>
       <div className="nm-hero-actions">
-        <button className="nm-btn-launch">
+        <Link to="/login" className="nm-btn-launch" style={{ textDecoration: 'none' }}>
           Start a meeting <ArrowRightIcon />
-        </button>
+        </Link>
         <button className="nm-btn-watch">
           <div className="nm-play-icon"><PlayIcon /></div>
           Watch demo
@@ -875,7 +876,7 @@ function CtaSection() {
         Free forever for individuals, no credit card required.
       </p>
       <div className="nm-cta-buttons">
-        <button className="nm-btn-launch">Start for free →</button>
+        <Link to="/signup" className="nm-btn-launch" style={{ textDecoration: 'none' }}>Start for free →</Link>
         <button className="nm-btn-ghost">Talk to sales</button>
       </div>
     </section>
