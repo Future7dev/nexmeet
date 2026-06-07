@@ -16,6 +16,15 @@ export function AuthProvider({ children }) {
     localStorage.setItem("vc_token", authToken);
   }
 
+  function updateUser(userData) {
+    setUser(userData);
+    localStorage.setItem("vc_user", JSON.stringify(userData));
+    if (userData.token) {
+      setToken(userData.token);
+      localStorage.setItem("vc_token", userData.token);
+    }
+  }
+
   function logout() {
     setUser(null);
     setToken(null);
@@ -24,7 +33,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -24,7 +24,7 @@ const DEFAULT_RECENT = [
 ];
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, token, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [joinLink, setJoinLink] = useState("");
   const [joinError, setJoinError] = useState("");
@@ -35,6 +35,11 @@ export default function Dashboard() {
   const [scheduleData, setScheduleData] = useState({ title: "", date: "" });
   const [scheduledLink, setScheduledLink] = useState("");
 
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settingsData, setSettingsData] = useState({ name: user?.name || "" });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState("");
+
   const [recentMeetings, setRecentMeetings] = useState(() => {
     const saved = localStorage.getItem("recentMeetings");
     if (saved) return JSON.parse(saved);
@@ -44,6 +49,53 @@ export default function Dashboard() {
 
   function handleNewMeeting() {
     navigate(`/room/${newRoomId}`);
+  }
+
+  function handleOpenSettings() {
+    setSettingsData({ name: user?.name || "" });
+    setSettingsError("");
+    setShowSettingsModal(true);
+  }
+
+  function handleCloseSettings() {
+    setShowSettingsModal(false);
+  }
+
+  async function handleSaveSettings() {
+    if (!settingsData.name.trim()) {
+      setSettingsError("Name cannot be empty.");
+      return;
+    }
+    setSavingSettings(true);
+    setSettingsError("");
+    
+    // If it's a demo user, skip backend update
+    if (token === "demo-token") {
+       updateUser({ ...user, name: settingsData.name });
+       setSavingSettings(false);
+       handleCloseSettings();
+       return;
+    }
+    
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SERVER_URL || "http://localhost:5000"}/api/auth/profile`, {
+        method: "PUT",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: settingsData.name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update profile");
+      
+      updateUser(data);
+      handleCloseSettings();
+    } catch (err) {
+      setSettingsError(err.message);
+    } finally {
+      setSavingSettings(false);
+    }
   }
 
   function handleOpenSchedule() {
@@ -130,7 +182,7 @@ export default function Dashboard() {
             </svg>
             <span>Messages</span>
           </button>
-          <button className="nav-item">
+          <button className="nav-item" onClick={handleOpenSettings}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
               <circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
             </svg>
@@ -290,6 +342,40 @@ export default function Dashboard() {
             <div className="modal-footer">
               <button className="btn-ghost" style={{ width: 'auto' }} onClick={handleCloseSchedule}>Cancel</button>
               <button className="btn-primary" style={{ width: 'auto' }} onClick={handleSaveSchedule}>Save & Copy Link</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="modal-overlay" onClick={handleCloseSettings}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Settings</h2>
+              <button className="modal-close" onClick={handleCloseSettings}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              {settingsError && <div className="auth-error">{settingsError}</div>}
+              <div className="field-group">
+                <label className="field-label">Display Name</label>
+                <input 
+                  className="field-input" 
+                  placeholder="Your Name"
+                  value={settingsData.name}
+                  onChange={(e) => setSettingsData({ ...settingsData, name: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-ghost" style={{ width: 'auto' }} onClick={handleCloseSettings} disabled={savingSettings}>Cancel</button>
+              <button className="btn-primary" style={{ width: 'auto' }} onClick={handleSaveSettings} disabled={savingSettings}>
+                {savingSettings ? <span className="spinner" /> : "Save Changes"}
+              </button>
             </div>
           </div>
         </div>
