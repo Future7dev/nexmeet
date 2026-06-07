@@ -30,7 +30,12 @@ export default function Dashboard() {
   const [joinError, setJoinError] = useState("");
   const [copying, setCopying] = useState(false);
   const [newRoomId] = useState(() => generateRoomId());
-  const [recentMeetings] = useState(() => {
+  
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleData, setScheduleData] = useState({ title: "", date: "" });
+  const [scheduledLink, setScheduledLink] = useState("");
+
+  const [recentMeetings, setRecentMeetings] = useState(() => {
     const saved = localStorage.getItem("recentMeetings");
     if (saved) return JSON.parse(saved);
     localStorage.setItem("recentMeetings", JSON.stringify(DEFAULT_RECENT));
@@ -39,6 +44,42 @@ export default function Dashboard() {
 
   function handleNewMeeting() {
     navigate(`/room/${newRoomId}`);
+  }
+
+  function handleOpenSchedule() {
+    setShowScheduleModal(true);
+    setScheduledLink(`${window.location.origin}/room/${generateRoomId()}`);
+  }
+
+  function handleCloseSchedule() {
+    setShowScheduleModal(false);
+    setScheduleData({ title: "", date: "" });
+    setScheduledLink("");
+  }
+
+  async function handleSaveSchedule() {
+    if (!scheduleData.title || !scheduleData.date) {
+      alert("Please enter a title and date/time.");
+      return;
+    }
+    
+    // Add to recent meetings
+    const d = new Date(scheduleData.date);
+    const formattedTime = `${d.toLocaleDateString("en-US", { weekday: "short" })}, ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    const newMeeting = {
+      id: extractRoomId(scheduledLink),
+      name: scheduleData.title,
+      time: formattedTime,
+      participants: 0
+    };
+    
+    const updatedMeetings = [newMeeting, ...recentMeetings].slice(0, 5); // Keep top 5
+    setRecentMeetings(updatedMeetings);
+    localStorage.setItem("recentMeetings", JSON.stringify(updatedMeetings));
+
+    await navigator.clipboard.writeText(scheduledLink);
+    alert("Meeting scheduled and link copied to clipboard!\n" + scheduledLink);
+    handleCloseSchedule();
   }
 
   function handleJoin(e) {
@@ -133,7 +174,7 @@ export default function Dashboard() {
             <div className="action-pill">+ Start now</div>
           </div>
 
-          <div className="action-card schedule-card">
+          <div className="action-card schedule-card" onClick={handleOpenSchedule}>
             <div className="action-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                 <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
@@ -204,6 +245,55 @@ export default function Dashboard() {
           </div>
         </section>
       </main>
+
+      {/* Schedule Modal */}
+      {showScheduleModal && (
+        <div className="modal-overlay" onClick={handleCloseSchedule}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Schedule Meeting</h2>
+              <button className="modal-close" onClick={handleCloseSchedule}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="field-group">
+                <label className="field-label">Meeting Title</label>
+                <input 
+                  className="field-input" 
+                  placeholder="e.g. Project Sync"
+                  value={scheduleData.title}
+                  onChange={(e) => setScheduleData({ ...scheduleData, title: e.target.value })}
+                />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Date & Time</label>
+                <input 
+                  type="datetime-local"
+                  className="field-input" 
+                  value={scheduleData.date}
+                  onChange={(e) => setScheduleData({ ...scheduleData, date: e.target.value })}
+                />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Meeting Link (auto-generated)</label>
+                <input 
+                  className="field-input" 
+                  value={scheduledLink}
+                  readOnly
+                  style={{ opacity: 0.7 }}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-ghost" style={{ width: 'auto' }} onClick={handleCloseSchedule}>Cancel</button>
+              <button className="btn-primary" style={{ width: 'auto' }} onClick={handleSaveSchedule}>Save & Copy Link</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
