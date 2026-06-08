@@ -903,7 +903,7 @@ function Footer() {
 // ── Main Component ──
 export default function LandingPage() {
   return (
-    <>
+    <div style={{ height: '100%', width: '100%', overflowY: 'auto', overflowX: 'hidden', scrollBehavior: 'smooth' }}>
       {/* Inject styles */}
       <style>{styles}</style>
 
@@ -940,6 +940,6 @@ export default function LandingPage() {
         <CtaSection />
         <Footer />
       </div>
-    </>
+    </div>
   );
 }
