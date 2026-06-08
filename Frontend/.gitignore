@@ -22,4 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-C:\Users\koley\OneDrive\Desktop\meetY\MeetY\Backend\.env
+
+# Environment Variables
+.env
+.env.*
+!.env.example
