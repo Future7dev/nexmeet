@@ -948,16 +948,53 @@ html, body, #root {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
+  .dashboard { flex-direction: column; height: 100vh; height: 100dvh; }
+  
+  .sidebar { 
+    width: 100%; 
+    border-right: none; 
+    border-top: 1px solid var(--border); 
+    flex-direction: row; 
+    padding: 8px; 
+    order: 2; 
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sidebar-logo { display: none; }
+  .sidebar-nav { flex-direction: row; flex: 1; justify-content: space-around; gap: 0; }
+  .nav-item { flex-direction: column; width: auto; padding: 6px; gap: 4px; justify-content: center; align-items: center; }
+  .nav-item span { font-size: 10px; }
+  .sidebar-user { margin-top: 0; padding: 0; background: transparent; width: auto; gap: 0; }
+  .user-info { display: none; }
+  .btn-logout { margin-left: 8px; padding: 8px; }
+
   .action-grid { grid-template-columns: 1fr; }
-  .dash-main { padding: 20px; }
+  .dash-main { padding: 20px; order: 1; }
   .field-row { grid-template-columns: 1fr; }
+  
   .auth-card { padding: 32px 24px; }
+  
   .controls-left, .controls-right { display: none; }
+  .controls-bar { padding: 0 10px; justify-content: center; }
   .controls-center { gap: 4px; }
-  .ctrl-btn { padding: 8px 10px; min-width: 56px; font-size: 10px; }
+  .ctrl-btn { padding: 8px 10px; min-width: 50px; font-size: 10px; }
+  
   .chat-panel, .participants-panel { width: 100%; position: absolute; bottom: 80px; top: 56px; right: 0; z-index: 20; }
+
+  .prejoin-box { padding: 20px; width: 100%; gap: 16px; border: none; box-shadow: none; background: transparent; }
+  .prejoin-page { align-items: flex-start; padding-top: 40px; }
+  .prejoin-actions { flex-direction: column; gap: 10px; }
+  .btn-join-now, .btn-cancel { width: 100%; }
+
+  .room-topbar { padding: 0 12px; }
+  .room-meta { gap: 8px; }
+  .room-id-badge { display: none; /* Hide ID to save space, rely on copy link action if present */ }
+
+  .join-form { flex-direction: column; }
+  .join-input-wrap { min-width: 100%; }
+  .btn-join { width: 100%; }
 }
+
 
 /* Modal */
 .modal-overlay {
