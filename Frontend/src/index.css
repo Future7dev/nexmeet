@@ -993,6 +993,15 @@ html, body, #root {
   .join-form { flex-direction: column; }
   .join-input-wrap { min-width: 100%; }
   .btn-join { width: 100%; }
+
+  .video-grid-area { overflow-y: auto; }
+  .video-grid { height: auto; min-height: 100%; }
+  .video-grid[class*="count-"] {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: none !important;
+    grid-auto-rows: minmax(250px, 1fr) !important;
+  }
+  .video-grid.count-3 .video-tile:first-child { grid-column: auto !important; }
 }
 
 
